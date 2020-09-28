@@ -1,3 +1,4 @@
+const { request, response } = require('express');
 const express = require('express');
 const app = express(); 
 const PORT = 8080; 
@@ -16,6 +17,11 @@ app.get("/", (request, response) => {
 // add json -> we can send stringed objects
 app.get("/urls.json", (request,response) => {
   response.json(urlDatabase);
+});
+
+app.get('/urls', (request,response) => {
+  const templateVars = { urls: urlDatabase };
+  response.render('urls_index', templateVars);
 });
 
 // add html -> we can send html responses

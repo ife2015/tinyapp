@@ -1,4 +1,3 @@
-const { request, response } = require('express');
 const express = require('express');
 const app = express(); 
 const PORT = 8080; 
@@ -24,6 +23,11 @@ app.get('/urls', (request,response) => {
   response.render('urls_index', templateVars);
 });
 
+app.get("/urls/:shortURL", (request, response) => {
+  const templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL]};
+  response.render("urls_show", templateVars);
+});
+
 // add html -> we can send html responses
 app.get("/hello", (request,response) => {
   response.send('<html><body>Hello <b>World</b></body></html>\n');
@@ -32,3 +36,5 @@ app.get("/hello", (request,response) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`); 
 });
+
+

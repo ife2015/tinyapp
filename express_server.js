@@ -6,6 +6,17 @@ const PORT = 8080;
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 
+const generateRandomString = function() {
+  let text = '';
+  const alphaNumberic = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+  for (let i = 0; i <= 5; i++) {
+    text += alphaNumberic.charAt(Math.floor(Math.random()*alphaNumberic.length));
+  }
+  return text;
+}
+
+//generateRandomString(); 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -26,18 +37,23 @@ app.get('/urls', (request,response) => {
 });
 
 app.get('/urls/new', (request,response) => {
-  
   response.render('urls_new');
 });
 
-app.post("/urls", (request, response) => {
-  console.log(request.body); 
-  res.send("Ok");         
+app.post('/urls', (request, response) => {     
+  const randomDigits = generateRandomString();
+  urlDatabase[randomDigits] = request.body.longURL;
+  response.redirect(`/urls/${randomDigits}`);
 });
 
-app.get("/urls/:shortURL", (request, response) => {
+app.get('/urls/:shortURL', (request, response) => {
   const templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL]};
-  response.render("urls_show", templateVars);
+  response.render('urls_show', templateVars);
+});
+
+app.get('/u/:shortURL', (request, response) => {
+  const longURL = urlDatabase[request.params.shortURL]; 
+  response.redirect(longURL);
 });
 
 // add html -> we can send html responses
@@ -51,14 +67,3 @@ app.listen(PORT, () => {
 });
 
 
-const generateRandomString = function() {
-  let text = "";
-  const alphaNumberic = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-  for (let i = 0; i <= 5; i++) {
-    text += alphaNumberic.charAt(Math.floor(Math.random()*alphaNumberic.length));
-  }
-  return text;
-}
-
-generateRandomString(); 

@@ -32,12 +32,22 @@ app.get("/urls.json", (request,response) => {
 });
 
 app.get('/urls', (request,response) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { 
+    username: request.cookies["username"], 
+    urls: urlDatabase 
+  };
   response.render('urls_index', templateVars);
 });
 
 app.get('/urls/new', (request,response) => {
   response.render('urls_new');
+});
+
+
+app.post('/urls/:shortURL/delete', (request,response) => {
+  const shortURLname = request.params.shortURL; 
+  delete urlDatabase[shortURLname];
+  response.redirect('/urls'); 
 });
 
 app.post('/urls/:shortURL', (request,response) => {
@@ -47,21 +57,26 @@ app.post('/urls/:shortURL', (request,response) => {
   response.redirect('/urls'); 
 });
 
+
 app.post('/urls', (request, response) => {     
   const randomDigits = generateRandomString();
   urlDatabase[randomDigits] = request.body.longURL;
   response.redirect(`/urls/${randomDigits}`);
 });  
 
-app.post('/urls/:shortURL/delete', (request,response) => {
-  const shortURLname = request.params.shortURL; 
-  delete urlDatabase[shortURLname];
-  response.redirect('/urls'); 
+app.post('/login', (request,response) => {
+  const username = request.body.username; 
+  response.cookie('username',username);
+  response.redirect('/urls');
 });
 
-
 app.get('/urls/:shortURL', (request, response) => {
-  const templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL]};
+  const templateVars = { 
+    username: request.cookies["username"], 
+    shortURL: request.params.shortURL, 
+    longURL: urlDatabase[request.params.shortURL]
+  };
+
   response.render('urls_show', templateVars);
 });
 

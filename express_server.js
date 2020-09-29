@@ -40,15 +40,22 @@ app.get('/urls/new', (request,response) => {
   response.render('urls_new');
 });
 
+app.post('/urls/:shortURL', (request,response) => {
+  const shortURLname = request.params.shortURL; 
+  const longURLname = request.body.longURL; 
+  urlDatabase[shortURLname] = longURLname ; 
+  response.redirect('/urls'); 
+});
+
 app.post('/urls', (request, response) => {     
   const randomDigits = generateRandomString();
   urlDatabase[randomDigits] = request.body.longURL;
   response.redirect(`/urls/${randomDigits}`);
-});
+});  
 
 app.post('/urls/:shortURL/delete', (request,response) => {
   const shortURLname = request.params.shortURL; 
-  delete urlDatabase[shortURLname]; 
+  delete urlDatabase[shortURLname];
   response.redirect('/urls'); 
 });
 

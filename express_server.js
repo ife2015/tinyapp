@@ -51,3 +51,14 @@ app.listen(PORT, () => {
 });
 
 
+const generateRandomString = function() {
+  let text = "";
+  const alphaNumberic = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+  for (let i = 0; i <= 5; i++) {
+    text += alphaNumberic.charAt(Math.floor(Math.random()*alphaNumberic.length));
+  }
+  return text;
+}
+
+generateRandomString(); 

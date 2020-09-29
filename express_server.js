@@ -46,6 +46,13 @@ app.post('/urls', (request, response) => {
   response.redirect(`/urls/${randomDigits}`);
 });
 
+app.post('/urls/:shortURL/delete', (request,response) => {
+  const shortURLname = request.params.shortURL; 
+  delete urlDatabase[shortURLname]; 
+  response.redirect('/urls'); 
+});
+
+
 app.get('/urls/:shortURL', (request, response) => {
   const templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL]};
   response.render('urls_show', templateVars);

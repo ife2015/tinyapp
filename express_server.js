@@ -8,7 +8,6 @@ app.set('view engine', 'ejs');
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
 
-
 const generateRandomString = function() {
   let text = '';
   const alphaNumberic = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -25,6 +24,14 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 }; 
 
+const users = {
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+};
+
 app.get("/", (request, response) => {
   response.send("Hello");
 }); 
@@ -36,14 +43,14 @@ app.get("/urls.json", (request,response) => {
 
 app.get('/urls', (request,response) => {
   const templateVars = {
-    username: request.cookies["username"],
+    username: users[request.cookies["user_id"]],
     urls: urlDatabase };
   response.render('urls_index', templateVars);
 });
 
 app.get('/urls/new', (request,response) => {
   const templateVars = { 
-    username: request.cookies["username"]
+    username: users[request.cookies["user_id"]]
   }
   response.render('urls_new', templateVars);
 });
@@ -80,9 +87,25 @@ app.post('/logout', (request,response) => {
   response.redirect('/urls');
 });
 
+app.post('/register', (request,response) => {
+  const {email, password } = request.body;
+  const userID = generateRandomString();
+  users[userID] = {id:userID,email,password};
+  response.cookie('user_id',userID);
+  response.redirect('/urls');
+});
+
+// const users = {
+//   "userRandomID": {
+//     id: "userRandomID", 
+//     email: "user@example.com", 
+//     password: "purple-monkey-dinosaur"
+//   },
+// };
+
 app.get('/urls/:shortURL', (request, response) => {
   const templateVars = { 
-    username: request.cookies["username"],
+    username: users[request.cookies["user_id"]],
     shortURL: request.params.shortURL, 
     longURL: urlDatabase[request.params.shortURL]};
     
@@ -92,6 +115,13 @@ app.get('/urls/:shortURL', (request, response) => {
 app.get('/u/:shortURL', (request, response) => {
   const longURL = urlDatabase[request.params.shortURL]; 
   response.redirect(longURL);
+});
+
+app.get('/register', (request, response) => {
+  const templateVars = { 
+    username: users[request.cookies["user_id"]]
+  }
+  response.render('urls_regis',templateVars);
 });
 
 // add html -> we can send html responses

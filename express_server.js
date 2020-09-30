@@ -145,10 +145,8 @@ app.post('/register', (request,response) => {
   }
 
     users[userID] = {id:userID,email,password};
-    console.log(users);
     response.cookie('user_id',userID);
     response.redirect('/urls');
-
 });
 
 

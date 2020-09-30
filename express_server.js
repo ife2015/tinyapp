@@ -48,6 +48,7 @@ app.get('/urls', (request,response) => {
   response.render('urls_index', templateVars);
 });
 
+// page for entering new urls 
 app.get('/urls/new', (request,response) => {
   const templateVars = { 
     username: users[request.cookies["user_id"]]
@@ -55,13 +56,14 @@ app.get('/urls/new', (request,response) => {
   response.render('urls_new', templateVars);
 });
 
-
+// the delete button
 app.post('/urls/:shortURL/delete', (request,response) => {
   const shortURLname = request.params.shortURL; 
   delete urlDatabase[shortURLname];
   response.redirect('/urls'); 
 });
 
+// reads the short and long urls from the body
 app.post('/urls/:shortURL', (request,response) => {
   const shortURLname = request.params.shortURL; 
   const longURLname = request.body.longURL; 
@@ -69,24 +71,27 @@ app.post('/urls/:shortURL', (request,response) => {
   response.redirect('/urls'); 
 });
 
-
+// add short and long urls to the list of urls 
 app.post('/urls', (request, response) => {     
   const randomDigits = generateRandomString();
   urlDatabase[randomDigits] = request.body.longURL;
   response.redirect(`/urls/${randomDigits}`);
 });  
 
+// edit login 
 app.post('/login', (request,response) => {
   const username = request.body.username; 
   response.cookie('username',username);
   response.redirect('/urls');
 });
 
+// edit logout
 app.post('/logout', (request,response) => {
   response.clearCookie('username');
   response.redirect('/urls');
 });
 
+// edit registration 
 app.post('/register', (request,response) => {
   const {email, password } = request.body;
   const userID = generateRandomString();
@@ -95,14 +100,7 @@ app.post('/register', (request,response) => {
   response.redirect('/urls');
 });
 
-// const users = {
-//   "userRandomID": {
-//     id: "userRandomID", 
-//     email: "user@example.com", 
-//     password: "purple-monkey-dinosaur"
-//   },
-// };
-
+// shows the new short url linked to the long url
 app.get('/urls/:shortURL', (request, response) => {
   const templateVars = { 
     username: users[request.cookies["user_id"]],
@@ -112,11 +110,13 @@ app.get('/urls/:shortURL', (request, response) => {
   response.render('urls_show', templateVars);
 });
 
+// short url link is redirected to the long url
 app.get('/u/:shortURL', (request, response) => {
   const longURL = urlDatabase[request.params.shortURL]; 
   response.redirect(longURL);
 });
 
+// register page
 app.get('/register', (request, response) => {
   const templateVars = { 
     username: users[request.cookies["user_id"]]

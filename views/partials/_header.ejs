@@ -18,7 +18,7 @@
     </form>
     <form action="/logout" method="POST">
       <% if(username) { %>
-        <p style="display: inline-block; margin-right: 5px; margin-top:10px;">Logged In As: <%= username %>! </p>
+        <p style="display: inline-block; margin-right: 5px; margin-top:10px;">Logged In As: <%= username.email %>! </p>
         <button class="btn btn-outline-dark" type=“submit”>Logout</button>
       <%}%>
     </form>

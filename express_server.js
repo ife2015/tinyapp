@@ -16,7 +16,15 @@ const generateRandomString = function() {
     text += alphaNumberic.charAt(Math.floor(Math.random()*alphaNumberic.length));
   }
   return text;
-}
+};
+
+const lookupEmails = function(userDatabase,useremail) {
+  for(let id in userDatabase) {
+    if(users[id].email === useremail) {
+      return true;
+    }
+  }
+}; 
 
 //generateRandomString(); 
 const urlDatabase = {
@@ -55,6 +63,36 @@ app.get('/urls/new', (request,response) => {
   }
   response.render('urls_new', templateVars);
 });
+
+// shows the new short url linked to the long url
+app.get('/urls/:shortURL', (request, response) => {
+  const templateVars = { 
+    username: users[request.cookies["user_id"]],
+    shortURL: request.params.shortURL, 
+    longURL: urlDatabase[request.params.shortURL]};
+    
+    response.render('urls_show', templateVars);
+  });
+  
+  // short url link is redirected to the long url
+  app.get('/u/:shortURL', (request, response) => {
+    const longURL = urlDatabase[request.params.shortURL]; 
+    response.redirect(longURL);
+  });
+  
+  // register page
+  app.get('/register', (request, response) => {
+    const templateVars = { 
+      username: users[request.cookies["user_id"]]
+    }
+    response.render('urls_regis',templateVars);
+  });
+  
+  // add html -> we can send html responses
+  app.get("/hello", (request,response) => {
+    response.send('<html><body>Hello <b>World</b></body></html>\n');
+  });
+
 
 // the delete button
 app.post('/urls/:shortURL/delete', (request,response) => {
@@ -95,38 +133,22 @@ app.post('/logout', (request,response) => {
 app.post('/register', (request,response) => {
   const {email, password } = request.body;
   const userID = generateRandomString();
-  users[userID] = {id:userID,email,password};
-  response.cookie('user_id',userID);
-  response.redirect('/urls');
-});
-
-// shows the new short url linked to the long url
-app.get('/urls/:shortURL', (request, response) => {
-  const templateVars = { 
-    username: users[request.cookies["user_id"]],
-    shortURL: request.params.shortURL, 
-    longURL: urlDatabase[request.params.shortURL]};
-    
-  response.render('urls_show', templateVars);
-});
-
-// short url link is redirected to the long url
-app.get('/u/:shortURL', (request, response) => {
-  const longURL = urlDatabase[request.params.shortURL]; 
-  response.redirect(longURL);
-});
-
-// register page
-app.get('/register', (request, response) => {
-  const templateVars = { 
-    username: users[request.cookies["user_id"]]
+  
+  if(email === "" || password === "") {
+    response.status(400).send("Email or Password is empty");
+    return;
+  } 
+  
+  if (lookupEmails(users,email) === true) {
+   response.status(400).send("Email is already in the system!");
+   return;
   }
-  response.render('urls_regis',templateVars);
-});
 
-// add html -> we can send html responses
-app.get("/hello", (request,response) => {
-  response.send('<html><body>Hello <b>World</b></body></html>\n');
+    users[userID] = {id:userID,email,password};
+    console.log(users);
+    response.cookie('user_id',userID);
+    response.redirect('/urls');
+
 });
 
 

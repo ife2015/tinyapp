@@ -26,13 +26,24 @@ const lookupEmails = function(userDatabase,useremail) {
   }
 }; 
 
+const urlsForUser = function(id) {
+  let urlsData = {}; 
+  for(let user in urlDatabase) {
+    if(urlDatabase[user].userID === id) {
+      urlsData[user]= urlDatabase[user].longURL; 
+    }
+  }
+  return urlsData; 
+};
+
 //generateRandomString(); 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 }; 
 
 const users = {
+  'aJ48lW': {id: 'aJ48lW', email:"ifemastero@yahoo.com", password:"zxc" } 
 };
 
 app.get("/", (request, response) => {
@@ -46,26 +57,42 @@ app.get("/urls.json", (request,response) => {
 
 app.get('/urls', (request,response) => {
   const templateVars = {
-    user_id: users[request.cookies["user_id"]],
-    urls: urlDatabase };
-  response.render('urls_index', templateVars);
+    user_id: users[request.cookies["user_id"]], 
+    urls: urlsForUser(request.cookies["user_id"]), 
+  };
+
+  //CHECKs usersId in urldatabase and compares to userlogin
+  if(request.cookies["user_id"] === undefined) {
+    //login 
+    response.redirect('/login');
+  } else {
+    response.render('urls_index', templateVars);
+  }
 });
+
 
 // page for entering new urls 
 app.get('/urls/new', (request,response) => {
   const templateVars = { 
     user_id: users[request.cookies["user_id"]]
+  } 
+
+  if (request.cookies["user_id"] === undefined) {
+    response.redirect('/login');
+  } else {
+    response.render('urls_new', templateVars); 
   }
-  response.render('urls_new', templateVars);
 });
 
 // shows the new short url linked to the long url
 app.get('/urls/:shortURL', (request, response) => {
   const templateVars = { 
-    user_id: users[request.cookies["user_id"]],
+    user_id: request.cookies["user_id"],
     shortURL: request.params.shortURL, 
-    longURL: urlDatabase[request.params.shortURL]};
-    
+    longURL: urlDatabase[request.params.shortURL].longURL,
+    urlUserId: urlDatabase[request.params.shortURL].userID
+  };
+  
     response.render('urls_show', templateVars);
   });
   
@@ -104,19 +131,28 @@ app.post('/urls/:shortURL/delete', (request,response) => {
   response.redirect('/urls'); 
 });
 
-// reads the short and long urls from the body
+// editing the short and long urls from the body
 app.post('/urls/:shortURL', (request,response) => {
   const shortURLname = request.params.shortURL; 
   const longURLname = request.body.longURL; 
-  urlDatabase[shortURLname] = longURLname ; 
-  response.redirect('/urls'); 
+  const userID = request.cookies["user_id"]
+  
+  if(userID) {
+    urlDatabase[shortURLname] = {longURL: longURLname, userID:userID }; 
+    response.redirect('/urls');
+  } 
+  
 });
 
 // add short and long urls to the list of urls 
 app.post('/urls', (request, response) => {     
   const randomDigits = generateRandomString();
-  urlDatabase[randomDigits] = request.body.longURL;
-  response.redirect(`/urls/${randomDigits}`);
+  const userID = request.cookies["user_id"];
+  if(userID) {
+    urlDatabase[randomDigits] = {longURL: request.body.longURL, userID:userID };
+    response.redirect(`/urls/${randomDigits}`);
+    console.log(urlDatabase);
+  }
 });  
 
 // edit login 

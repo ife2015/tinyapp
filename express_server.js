@@ -122,10 +122,6 @@ app.post('/urls', (request, response) => {
 // edit login 
 app.post('/login', (request,response) => {
   const {email, password } = request.body;
-// check if the email is in the users
-// check if for that email the password matches
-// if everything true, grab user object in users
-// set the cookie to that user ID 
 
   for(let user in users) {
     if(email === users[user].email) {
@@ -162,7 +158,6 @@ app.post('/register', (request,response) => {
    return;
   }
     users[userID] = {id:userID,email,password};
-    console.log(users);
     response.cookie('user_id',userID);
     response.redirect('/urls');
 });

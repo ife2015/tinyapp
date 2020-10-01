@@ -1,13 +1,15 @@
 const express = require('express');
-const cookieParser = require('cookie-parser');
+//const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const app = express(); 
 const bodyParser = require("body-parser");
 const PORT = 8080; 
 const bcrypt = require('bcrypt'); 
 
 app.set('view engine', 'ejs');
+app.use(cookieSession({name:'session',keys:['key1','key2']}));
 
-app.use(cookieParser());
+//app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
 
 const generateRandomString = function() {
@@ -20,7 +22,7 @@ const generateRandomString = function() {
   return text;
 };
 
-const lookupEmails = function(userDatabase, useremail) {
+const getUserByEmail = function(userDatabase, useremail) {
   for (let id in userDatabase) {
     if (users[id].email === useremail) {
       return true;
@@ -78,12 +80,12 @@ app.get("/urls.json", (request,response) => {
 
 app.get('/urls', (request,response) => {
   const templateVars = {
-    user_id: users[request.cookies["user_id"]], 
-    urls: urlsForUser(request.cookies["user_id"]), 
+    user_id: users[request.session.user_id], 
+    urls: urlsForUser(request.session.user_id), 
   };
 
   //CHECKs usersId in urldatabase and compares to userlogin
-  if (request.cookies["user_id"] === undefined) {
+  if (request.session.user_id === undefined) {
     //login 
     response.redirect('/login');
   } else {
@@ -95,10 +97,10 @@ app.get('/urls', (request,response) => {
 // page for entering new urls 
 app.get('/urls/new', (request,response) => {
   const templateVars = { 
-    user_id: users[request.cookies["user_id"]]
+    user_id: users[request.session.user_id]
   } 
 
-  if (request.cookies["user_id"] === undefined) {
+  if (request.session.user_id === undefined) {
     response.redirect('/login');
   } else {
     response.render('urls_new', templateVars); 
@@ -108,7 +110,7 @@ app.get('/urls/new', (request,response) => {
 // shows the new short url linked to the long url
 app.get('/urls/:shortURL', (request, response) => {
   const templateVars = { 
-    user_id: request.cookies["user_id"],
+    user_id: request.session.user_id,
     shortURL: request.params.shortURL, 
     longURL: urlDatabase[request.params.shortURL].longURL,
     urlUserId: urlDatabase[request.params.shortURL].userID
@@ -117,7 +119,6 @@ app.get('/urls/:shortURL', (request, response) => {
     response.render('urls_show', templateVars);
   });
 
-    
   // short url link is redirected to the long url
   app.get('/u/:shortURL', (request, response) => {
     const longURL = urlDatabase[request.params.shortURL]; 
@@ -127,18 +128,17 @@ app.get('/urls/:shortURL', (request, response) => {
   // register page
   app.get('/register', (request, response) => {
     const templateVars = { 
-      user_id: users[request.cookies["user_id"]]
+      user_id: users[request.session.user_id]
     }
     response.render('urls_regis',templateVars);
   });
   
   app.get('/login', (request, response) => {
     const templateVars = { 
-      user_id: users[request.cookies["user_id"]]
+      user_id: users[request.session.user_id]
     }
     response.render("urls_login", templateVars);
-  })
-
+  });
 
   // add html -> we can send html responses
   app.get("/hello", (request,response) => {
@@ -157,7 +157,7 @@ app.post('/urls/:shortURL/delete', (request,response) => {
 app.post('/urls/:shortURL', (request,response) => {
   const shortURLname = request.params.shortURL; 
   const longURLname = request.body.longURL; 
-  const userID = request.cookies["user_id"]
+  const userID = request.session.user_id
   
   if(userID) {
     urlDatabase[shortURLname] = {longURL: longURLname, userID:userID }; 
@@ -169,7 +169,8 @@ app.post('/urls/:shortURL', (request,response) => {
 // add short and long urls to the list of urls 
 app.post('/urls', (request, response) => {     
   const randomDigits = generateRandomString();
-  const userID = request.cookies["user_id"];
+  const userID = request.session.user_id;
+
   if(userID) {
     urlDatabase[randomDigits] = {longURL: request.body.longURL, userID:userID };
     response.redirect(`/urls/${randomDigits}`);
@@ -181,7 +182,6 @@ app.post('/urls', (request, response) => {
 
 
 // edit login 
-// bcrypt.compareSync(password, users[user].password)
 app.post('/login', (request, response) => {
   const { email, password } = request.body;
   console.log(request.body);
@@ -191,17 +191,16 @@ app.post('/login', (request, response) => {
   if(!userId) {
     response.status(403).send("Email or Password don't match");
   } else {
-    response.cookie('user_id', userId);
+    request.session.user_id = userId;
     response.redirect('/urls');
   }
-
 });
 
 
 
 // edit logout
 app.post('/logout', (request,response) => {
-  response.clearCookie('user_id');
+  request.session = null; 
   response.redirect('/urls');
 });
 
@@ -218,17 +217,15 @@ app.post('/register', (request, response) => {
     return;
   }
 
-  if (lookupEmails(users, email) === true) {
+  if (getUserByEmail(users, email) === true) {
     response.status(400).send("Email is already in the system!");
     return;
   }
   users[userID] = { id: userID, email, password:hashedPassword};
   console.log(users);
-  response.cookie('user_id', userID);
+  request.session.user_id = userID;
   response.redirect('/urls');
 });
-
-
 
 
 

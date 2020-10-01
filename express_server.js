@@ -33,11 +33,6 @@ const urlDatabase = {
 }; 
 
 const users = {
-  "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
-  },
 };
 
 app.get("/", (request, response) => {
@@ -51,7 +46,7 @@ app.get("/urls.json", (request,response) => {
 
 app.get('/urls', (request,response) => {
   const templateVars = {
-    username: users[request.cookies["user_id"]],
+    user_id: users[request.cookies["user_id"]],
     urls: urlDatabase };
   response.render('urls_index', templateVars);
 });
@@ -59,7 +54,7 @@ app.get('/urls', (request,response) => {
 // page for entering new urls 
 app.get('/urls/new', (request,response) => {
   const templateVars = { 
-    username: users[request.cookies["user_id"]]
+    user_id: users[request.cookies["user_id"]]
   }
   response.render('urls_new', templateVars);
 });
@@ -67,7 +62,7 @@ app.get('/urls/new', (request,response) => {
 // shows the new short url linked to the long url
 app.get('/urls/:shortURL', (request, response) => {
   const templateVars = { 
-    username: users[request.cookies["user_id"]],
+    user_id: users[request.cookies["user_id"]],
     shortURL: request.params.shortURL, 
     longURL: urlDatabase[request.params.shortURL]};
     
@@ -83,11 +78,19 @@ app.get('/urls/:shortURL', (request, response) => {
   // register page
   app.get('/register', (request, response) => {
     const templateVars = { 
-      username: users[request.cookies["user_id"]]
+      user_id: users[request.cookies["user_id"]]
     }
     response.render('urls_regis',templateVars);
   });
   
+  app.get('/login', (request, response) => {
+    const templateVars = { 
+      user_id: users[request.cookies["user_id"]]
+    }
+    response.render("urls_login", templateVars);
+  })
+
+
   // add html -> we can send html responses
   app.get("/hello", (request,response) => {
     response.send('<html><body>Hello <b>World</b></body></html>\n');
@@ -118,14 +121,29 @@ app.post('/urls', (request, response) => {
 
 // edit login 
 app.post('/login', (request,response) => {
-  const username = request.body.username; 
-  response.cookie('username',username);
-  response.redirect('/urls');
+  const {email, password } = request.body;
+// check if the email is in the users
+// check if for that email the password matches
+// if everything true, grab user object in users
+// set the cookie to that user ID 
+
+  for(let user in users) {
+    if(email === users[user].email) {
+      if(password === users[user].password) {
+          response.cookie('user_id', user);
+          response.redirect('/urls'); 
+      }
+    } else {
+      response.status(403).send("Email or Password don't match"); 
+    }
+   }
+   response.status(403).send("Your email was not found!"); 
+
 });
 
 // edit logout
 app.post('/logout', (request,response) => {
-  response.clearCookie('username');
+  response.clearCookie('user_id');
   response.redirect('/urls');
 });
 
@@ -143,8 +161,8 @@ app.post('/register', (request,response) => {
    response.status(400).send("Email is already in the system!");
    return;
   }
-
     users[userID] = {id:userID,email,password};
+    console.log(users);
     response.cookie('user_id',userID);
     response.redirect('/urls');
 });

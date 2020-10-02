@@ -1,5 +1,5 @@
+const findUserByEmail = require('./helpers.js');
 const express = require('express');
-//const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
 const app = express(); 
 const bodyParser = require("body-parser");
@@ -9,7 +9,6 @@ const bcrypt = require('bcrypt');
 app.set('view engine', 'ejs');
 app.use(cookieSession({name:'session',keys:['key1','key2']}));
 
-//app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
 
 const generateRandomString = function() {
@@ -21,14 +20,6 @@ const generateRandomString = function() {
   }
   return text;
 };
-
-const getUserByEmail = function(userDatabase, useremail) {
-  for (let id in userDatabase) {
-    if (users[id].email === useremail) {
-      return true;
-    }
-  }
-}; 
 
 const urlsForUser = function (id) {
   let urlsData = {};
@@ -50,17 +41,17 @@ const users = {
   'aJ48lW': {id: 'aJ48lW', email:"ifemastero@yahoo.com", password:"zxc" } 
 };
 
-const findUserByEmail = function(email) {
-  for (let userId in users) {
-    if (email === users[userId].email) { 
-      return users[userId];
-    }
-  }
-  return false; 
-};
+// const findUserByEmail = function(userDatabase, useremail) {
+//   for (let userId in userDatabase) {
+//     if (useremail === userDatabase[userId].email) { 
+//       return users[userId];
+//     }
+//   }
+//   return false; 
+// };
 
-const authenticateUser = function(email, password) {
-  const user = findUserByEmail(email); 
+const authenticateUser = function(userDatabase, email, password) {
+  const user = findUserByEmail(userDatabase, email); 
   
   if(user && bcrypt.compareSync(password, user.password)) {
     return user.id;
@@ -71,7 +62,6 @@ const authenticateUser = function(email, password) {
 app.get("/", (request, response) => {
   response.send("Hello");
 }); 
-
 
 // add json -> we can send stringed objects
 app.get("/urls.json", (request,response) => {
@@ -179,14 +169,12 @@ app.post('/urls', (request, response) => {
 });  
 
 
-
-
 // edit login 
 app.post('/login', (request, response) => {
   const { email, password } = request.body;
   console.log(request.body);
 
-  const userId = authenticateUser(email,password); 
+  const userId = authenticateUser(users,email,password); 
 
   if(!userId) {
     response.status(403).send("Email or Password don't match");
@@ -197,13 +185,12 @@ app.post('/login', (request, response) => {
 });
 
 
-
 // edit logout
 app.post('/logout', (request,response) => {
   request.session = null; 
+
   response.redirect('/urls');
 });
-
 
 
 // edit registration 
@@ -212,12 +199,13 @@ app.post('/register', (request, response) => {
   const hashedPassword = bcrypt.hashSync(password, 10);
   const userID = generateRandomString();
 
+
   if (email === "" || password === "") {
     response.status(400).send("Email or Password is empty");
     return;
   }
 
-  if (getUserByEmail(users, email) === true) {
+  if (findUserByEmail(users, email) === true) {
     response.status(400).send("Email is already in the system!");
     return;
   }
@@ -226,7 +214,6 @@ app.post('/register', (request, response) => {
   request.session.user_id = userID;
   response.redirect('/urls');
 });
-
 
 
 app.listen(PORT, () => {

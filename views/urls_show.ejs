@@ -12,12 +12,12 @@
       <div class="card-header"></div>
       <div class="card-body">
         <h5 class="card-title">TinyURL for: <%= longURL %></h5>
-        <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
+        <p class="card-text">Short URL: <a href="<%= longURL %>"><%= shortURL %></a></p>
       </div>
     <div class="card-footer text-muted"></div>
-    <% if(!user_id) { %> 
+    <% if(!useridname) { %> 
       <h3 class="card-title">Not Logged In!</h3>
-    <%} else if (user_id !== urlUserId) {%>
+    <%} else if (useridname !== urlUserId) {%>
       <h3 class="card-title"> You don't have permission to edit </h3>
     <% } else { %>
       <form action="/urls/<%= shortURL%>" method="POST">

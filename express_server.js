@@ -27,145 +27,149 @@ const users = {
   }
 };
 
-app.get('/urls', (request, response) => {
+app.get('/urls', (req, res) => {
   const templateVars = {
-    user_id: users[request.session.user_id],
-    urls: urlsForUser(urlDatabase, request.session.user_id),
+    user_id: users[req.session.user_id],
+    urls: urlsForUser(urlDatabase, req.session.user_id),
   };
 
   //Checks if user id is present
-  if (request.session.user_id === undefined) {
+  if (req.session.user_id === undefined) {
     // if not, redirects to login
-    response.redirect('/login');
+    res.redirect('/login');
   } else {
     // if so redirects to list of urls user has
-    response.render('urls_index', templateVars);
+    res.render('urls_index', templateVars);
   }
 });
 
 // page for entering new urls 
-app.get('/urls/new', (request, response) => {
+app.get('/urls/new', (req, res) => {
   const templateVars = {
-    user_id: users[request.session.user_id]
+    user_id: users[req.session.user_id]
   }
 
   //Checks if user id is present
-  if (request.session.user_id === undefined) {
+  if (req.session.user_id === undefined) {
     // if not, redirects to login
-    response.redirect('/login');
+    res.redirect('/login');
   } else {
     // if so redirects user to enter new url to be shortened
-    response.render('urls_new', templateVars);
+    res.render('urls_new', templateVars);
   }
 });
+
 
 // shows the specific short url created for the specific long url
-app.get('/urls/:shortURL', (request, response) => {
+app.get('/urls/:shortURL', (req, res) => {
   const templateVars = {
-    user_id: request.session.user_id,
-    shortURL: request.params.shortURL,
-    longURL: urlDatabase[request.params.shortURL].longURL,
-    urlUserId: urlDatabase[request.params.shortURL].userID
+    user_id: users[req.session.user_id],
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL].longURL,
+    urlUserId: urlDatabase[req.params.shortURL].userID, 
+    useridname:req.session.user_id
   };
 
-  response.render('urls_show', templateVars);
+  res.render('urls_show', templateVars);
 });
+
 
 // specific short url link is redirected to the page of the long url 
-app.get('/u/:shortURL', (request, response) => {
-  const longURL = urlDatabase[request.params.shortURL];
-  response.redirect(longURL);
+app.get('/u/:shortURL', (req, res) => {
+  const longUrlLink = urlDatabase[req.params.shortURL]["longURL"];
+  res.redirect(longUrlLink);
 });
 
+
 // renders register page
-app.get('/register', (request, response) => {
+app.get('/register', (req, res) => {
   const templateVars = {
-    user_id: users[request.session.user_id]
+    user_id: users[req.session.user_id]
   }
-  response.render('urls_regis', templateVars);
+  res.render('urls_regis', templateVars);
 });
 
 // renders the login page 
-app.get('/login', (request, response) => {
+app.get('/login', (req, res) => {
   const templateVars = {
-    user_id: users[request.session.user_id]
+    user_id: users[req.session.user_id]
   }
-  response.render("urls_login", templateVars);
+  res.render("urls_login", templateVars);
 });
 
 // the delete button attached to specific short url
-app.post('/urls/:shortURL/delete', (request, response) => {
-  const shortURLname = request.params.shortURL;
+app.post('/urls/:shortURL/delete', (req, res) => {
+  const shortURLname = req.params.shortURL;
   delete urlDatabase[shortURLname];
-  response.redirect('/urls');
+  res.redirect('/urls');
 });
 
 // editing the short and long urls from the body
-app.post('/urls/:shortURL', (request, response) => {
-  const shortURLname = request.params.shortURL;
-  const longURLname = request.body.longURL;
-  const userID = request.session.user_id
+app.post('/urls/:shortURL', (req, res) => {
+  const shortURLname = req.params.shortURL;
+  const longURLname = req.body.longURL;
+  const userID = req.session.user_id
 
   if (userID) {
     urlDatabase[shortURLname] = { longURL: longURLname, userID: userID };
-    response.redirect('/urls');
+    res.redirect('/urls');
   }
 });
 
 // add short and long urls to the list of urls 
-app.post('/urls', (request, response) => {
+app.post('/urls', (req, res) => {
   const randomDigits = generateRandomString();
-  const userID = request.session.user_id;
+  const userID = req.session.user_id;
 
   if (userID) {
-    urlDatabase[randomDigits] = { longURL: request.body.longURL, userID: userID };
-    response.redirect(`/urls/${randomDigits}`);
+    urlDatabase[randomDigits] = { longURL: req.body.longURL, userID: userID };
+    res.redirect(`/urls/${randomDigits}`);
     console.log(urlDatabase);
   }
 });
 
 // captures email and password from the html body
-app.post('/login', (request, response) => {
-  const { email, password } = request.body;
+app.post('/login', (req, res) => {
+  const { email, password } = req.body;
 
   const userId = authenticateUser(users, email, password);
 
   if (!userId) {
-    response.status(403).send("Email or Password don't match");
+    res.status(403).send("Email or Password don't match");
   } else {
-    request.session.user_id = userId;
-    response.redirect('/urls');
+    req.session.user_id = userId;
+    res.redirect('/urls');
   }
 });
 
 // logout submission and clears cookies
-app.post('/logout', (request, response) => {
-  request.session = null;
-  response.redirect('/urls');
+app.post('/logout', (req, res) => {
+  req.session = null;
+  res.redirect('/urls');
 });
 
 // edit registration 
-app.post('/register', (request, response) => {
-  const { email, password } = request.body;
+app.post('/register', (req, res) => {
+  const { email, password } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 10);
   const userID = generateRandomString();
 
   // no user or password input 
   if (email === "" || password === "") {
-    response.status(400).send("Email or Password is empty");
+    res.status(400).send("Email or Password is empty");
     return;
   }
 
   // checks if email is in user database
   if (getUserByEmail(users, email) === true) {
-    response.status(400).send("Email is already in the system!");
+    res.status(400).send("Email is already in the system!");
     return;
   }
 
   users[userID] = { id: userID, email, password: hashedPassword };
 
-  request.session.user_id = userID;
-  response.redirect('/urls');
+  req.session.user_id = userID;
+  res.redirect('/urls');
 });
 
 // listen for server connection

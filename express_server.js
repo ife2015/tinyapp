@@ -32,9 +32,9 @@ app.get('/urls', (req, res) => {
     user_id: users[req.session.user_id],
     urls: urlsForUser(urlDatabase, req.session.user_id),
   };
-
+  
   //Checks if user id is present
-  if (req.session.user_id === undefined) {
+  if (!users[req.session.user_id]) {
     // if not, redirects to login
     res.redirect('/login');
   } else {
@@ -42,6 +42,10 @@ app.get('/urls', (req, res) => {
     res.render('urls_index', templateVars);
   }
 });
+
+app.get('/', (req, res) => {
+  res.redirect('/urls');
+}); 
 
 // page for entering new urls 
 app.get('/urls/new', (req, res) => {
@@ -70,15 +74,22 @@ app.get('/urls/:shortURL', (req, res) => {
     useridname:req.session.user_id
   };
 
-  res.render('urls_show', templateVars);
-});
+  
+    res.render('urls_show', templateVars);
 
+});
 
 // specific short url link is redirected to the page of the long url 
 app.get('/u/:shortURL', (req, res) => {
-  const longUrlLink = urlDatabase[req.params.shortURL]["longURL"];
-  res.redirect(longUrlLink);
+  if(urlDatabase[req.params.shortURL] === undefined ) {
+    res.status(403).send("Short URl doesn't exist");
+  } else {
+    const longUrlLink = urlDatabase[req.params.shortURL]["longURL"];
+    res.redirect(longUrlLink);
+  }
+  
 });
+
 
 
 // renders register page
@@ -124,7 +135,6 @@ app.post('/urls', (req, res) => {
   if (userID) {
     urlDatabase[randomDigits] = { longURL: req.body.longURL, userID: userID };
     res.redirect(`/urls/${randomDigits}`);
-    console.log(urlDatabase);
   }
 });
 

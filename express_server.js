@@ -63,7 +63,6 @@ app.get('/urls/new', (req, res) => {
   }
 });
 
-
 // shows the specific short url created for the specific long url
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = {
@@ -73,10 +72,7 @@ app.get('/urls/:shortURL', (req, res) => {
     urlUserId: urlDatabase[req.params.shortURL].userID, 
     useridname:req.session.user_id
   };
-
-  
     res.render('urls_show', templateVars);
-
 });
 
 // specific short url link is redirected to the page of the long url 
@@ -87,10 +83,7 @@ app.get('/u/:shortURL', (req, res) => {
     const longUrlLink = urlDatabase[req.params.shortURL]["longURL"];
     res.redirect(longUrlLink);
   }
-  
 });
-
-
 
 // renders register page
 app.get('/register', (req, res) => {
@@ -165,13 +158,13 @@ app.post('/register', (req, res) => {
   const userID = generateRandomString();
 
   // no user or password input 
-  if (email === "" || password === "") {
+  if (!email|| !password) {
     res.status(400).send("Email or Password is empty");
     return;
   }
 
   // checks if email is in user database
-  if (getUserByEmail(users, email) === true) {
+  if (getUserByEmail(users, email)) {
     res.status(400).send("Email is already in the system!");
     return;
   }
